@@ -1,8 +1,10 @@
 const express = require("express");
 const app = express();
 const userApi = require("./user-api");
-const port = 5000;
 const accountApi = require("./account-api");
+const videoApi = require("./video-api");
+
+const port = 5000;
 
 
 var fs = require("fs");
@@ -28,6 +30,7 @@ db.serialize(function() {
 
         db.run("CREATE TABLE `Videos`" +
         "(`VideoID`	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,"+ 
+        "`VideoURL`	TEXT NOT NULL," +
         "`Description`	TEXT);");
 
         db.run('CREATE TABLE `UserFavoriteVideos` (' +
@@ -38,8 +41,9 @@ db.serialize(function() {
 
         db.run('CREATE TABLE `UserFriends` (' +
         '`UserID` INTEGER NOT NULL,' +
-        '`VideoID` VARCHAR(50) NOT NULL UNIQUE,' +
-        'FOREIGN KEY(VideoID) REFERENCES Videos(VideoID));');
+        '`UserID1` VARCHAR(50) NOT NULL UNIQUE,' +
+        'FOREIGN KEY(UserID) REFERENCES Accounts(UserID))' +
+        'FOREIGN KEY(UserID1) REFERENCES Accounts(UserID));');
 
         db.run('CREATE TABLE `Channels` (' +
         '`ChannelID` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,' +
@@ -52,7 +56,7 @@ db.serialize(function() {
         '`ChannelID` INTEGER NOT NULL,' +
         'FOREIGN KEY(VideoID) REFERENCES Videos(VideoID),' +
         'FOREIGN KEY(ChannelID) REFERENCES Channels(ChannelID));');
-    }
+    } 
 
 });
 
@@ -67,4 +71,6 @@ db.close();
 
 app.use('/user', userApi);
 app.use('/account', accountApi);
+app.use('/video', videoApi);
+
 module.exports = db;
