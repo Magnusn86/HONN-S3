@@ -41,7 +41,7 @@ db.serialize(function() {
 
         db.run('CREATE TABLE `UserFriends` (' +
         '`UserID` INTEGER NOT NULL,' +
-        '`UserID1` VARCHAR(50) NOT NULL UNIQUE,' +
+        '`UserFriendID` VARCHAR(50) NOT NULL UNIQUE,' +
         'FOREIGN KEY(UserID) REFERENCES Accounts(UserID))' +
         'FOREIGN KEY(UserID1) REFERENCES Accounts(UserID));');
 
