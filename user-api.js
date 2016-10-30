@@ -17,11 +17,6 @@ var db = new sqlite3.Database(file);
 //Get favorite videos
 app.get("/favorite", (req, res) => {
 
-    var exists = fs.existsSync(file);
-    if(!exists) {
-        return res.status(404).json();
-    }
-
     if(req.headers.authorization === undefined){
 		return res.status(401).send("Not Authorized");
 	}
@@ -37,7 +32,7 @@ app.get("/favorite", (req, res) => {
 	            }
 	            var userID = row.UserID;
 
-	            db.all("SELECT Description, VideoURL FROM Videos Where VideoID IN (SELECT u.VideoID FROM UserFavoriteVideos u WHERE u.UserID = " + userID + ")", function (err, rowV) {
+	            db.all("SELECT * FROM Videos Where VideoID IN (SELECT u.VideoID FROM UserFavoriteVideos u WHERE u.UserID = " + userID + ")", function (err, rowV) {
 	            	if(err)
 	            		return res.status(500).json();
 	            	if(row === undefined){
