@@ -2,7 +2,7 @@
 
 
 
-
+/*
 
 const entities = {
     User: UserEntity, // þarf að laga hér
@@ -10,4 +10,4 @@ const entities = {
     Punch: PunchEntity
 }
 
-module.exports = entities;
+module.exports = entities;*/
