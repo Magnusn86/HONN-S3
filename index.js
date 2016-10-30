@@ -1,8 +1,8 @@
 const express = require("express");
 const app = express();
 const userApi = require("./user-api");
-const port = 4000;
-
+const port = 5000;
+const accountApi = require("./account-api");
 
 
 var fs = require("fs");
@@ -56,7 +56,15 @@ db.serialize(function() {
 
 });
 
+app.listen(port, function() {
+    console.log("Web server started on port: " + port);
+});
+
+
 db.close();
 
 
-app.use('/user-api', userApi);
+
+app.use('/user', userApi);
+app.use('/account', accountApi);
+module.exports = db;
