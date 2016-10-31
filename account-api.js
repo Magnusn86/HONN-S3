@@ -99,20 +99,9 @@ app.put("/", (req, res) => {
         if(authErr) {
             return res.status(401).json(authErr);
         } else {
-            
             console.log(authSuccess);
+            credentials.password = newpassword;
         }
-    });
-    db.serialize(function () {
-        db.run("UPDATE Accounts SET password = '" + newPassword +"' WHERE username = '" + username + "'", function (err, row) {
-            if(err)
-                return res.status(500).json();
-
-            if(this.changes === 0) {
-                return res.status(404).json();
-            }
-            return res.status(200).json();
-        });
     });
 });
 

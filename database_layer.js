@@ -30,10 +30,22 @@ const getUser = function(credentials, cb) {
 }
 
 const updateUser = function(credentials, cd) {
-    
+    db.serialize(function () {
+        db.run("UPDATE Accounts SET password = '" + credentials.password +"' WHERE username = '" + credentials.username + "'", function (err, row) {
+            if(err) {
+                cb(err);
+                return;
+            }
+            if(this.changes === 0) {
+                cb(err);
+            }
+            return res.status(200).json();
+        });
+    });
 }
 
 module.exports = {
     addUser: addUser,
     getUser: getUser,
+    updateUser: updateUser,
 }
