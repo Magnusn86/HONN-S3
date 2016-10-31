@@ -44,8 +44,58 @@ const updateUser = function(credentials, cd) {
     });
 }
 
+
+const getFavoriteVideo = function(credentials , cb) {
+    db.serialize(function () {
+        db.get("SELECT UserID FROM Accounts Where token = '" + credentials.token + "'", function (err, row) {
+            if(err)
+                return cb(err);
+            if(row === undefined) 
+                return cb(err);
+
+            var userID = row.UserID;
+
+            db.all("SELECT * FROM Videos Where VideoID IN (SELECT u.VideoID FROM UserFavoriteVideos u WHERE u.UserID = " + userID + ")", function (err, rowV) {
+                if(err)
+                    return cb(err);
+                if(row === undefined)
+                    return cb(err);
+
+                cb(null, rowV);
+            });
+        });
+    });
+}
+
+const getUsersFriends = function(credentials , cb) {
+    db.serialize(function () {
+        db.get("SELECT UserID FROM Accounts Where token = '" + credentials.token + "'", function (err, row) {
+            if(err)
+                return cb(err);
+            if(row === undefined) 
+                return cb(err);
+
+            var userID = row.UserID;
+
+            db.all("SELECT UserFriendID FROM UserFriends Where UserID = '" + userID + "'", function (err, rowU) {
+                if(err)
+                    return cb(err);
+                if(row === undefined)
+                    return cb(err);
+    
+                cb(null, rowU);
+            });
+        });
+    });
+}
+
+
+
 module.exports = {
     addUser: addUser,
     getUser: getUser,
     updateUser: updateUser,
+    getFavoriteVideo: getFavoriteVideo,
+    getUsersFriends: getUsersFriends,
+
 }
