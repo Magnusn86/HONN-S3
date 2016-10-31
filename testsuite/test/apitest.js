@@ -1,4 +1,4 @@
-var expect    = require("chai").expect;
+/*var expect    = require("chai").expect;
 var request = require("request");
 var converter = require("../app/apitest");
 
@@ -26,7 +26,7 @@ describe("Color Code Converter", function() {
       expect(blue).to.deep.equal([0, 0, 255]);
     });
   });
-});
+});*/
 
 
 //expect(1+1).to.equal(2)

@@ -1,59 +1,40 @@
 var expect    = require("chai").expect;
 var request = require("request");
+var database = require("../database_layer");
 
 describe("Videos Api test", function() {
 
-  describe("User not authorized", function() {
+    describe("User not authorized", function() {
 
-    var url = "http://localhost:5000/videos";
+        var url = "http://localhost:5000/videos";
 
-    it("returns status 401", function(done) {
-      request(url, function(error, response, body) {
-        expect(response.statusCode).to.equal(401);
-        done();
-      });
-    });
+        it("returns status 401", function(done) {
+            request(url, function(error, response, body) {
+                expect(response.statusCode).to.equal(401);
+                done();
+            });
+        });
 
     it("Returns a list of videos", function(done) {
-
-    var options = {
-        url: "http://localhost:5000/videos",
-        headers: {
-            'Authorization': 'admin'
-        }
-    };
- 
-    function callback(error, response, body) {
-    if (!error && response.statusCode == 200) {
-        var info = JSON.parse(body);
-        console.log(info);
-    }
-    }
- 
-    request(options, callback);
+        request({
+            url: url,
+            headers: {
+                'Authorization': "admin"
+            }}, 
+            function(error, response, body) {
+            database.getAllVideos((err, res) => {
+                console.log(err);
+                console.log("inside");
+                console.log(res);
+                console.log(body);
+                expect(JSON.parse(body)).to.deep.equal(res);
+                done();
+            });
+        });
+        
     
     });
-
   });
-
-  describe("Hex to RGB conversion", function() {
-    var url = "http://localhost:3000/hexToRgb?hex=00ff00";
-
-    it("returns status 200", function(done) {
-      request(url, function(error, response, body) {
-        expect(response.statusCode).to.equal(200);
-        done();
-      });
-    });
-
-    it("returns the color in RGB", function(done) {
-      request(url, function(error, response, body) {
-        expect(body).to.equal("[0,255,0]");
-        done();
-      });
-    });
-  });
-
 });
 
 

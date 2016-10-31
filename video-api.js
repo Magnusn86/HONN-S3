@@ -2,18 +2,11 @@
 
 const express = require("express");
 const app = express();
-const uuid = require("node-uuid");
 var bodyParser = require('body-parser');
 const dbLayer = require("./database_layer");
 const auth = require("./authorization");
-var fs = require("fs");
-var sqlite3 = require("sqlite3").verbose();
 
 app.use(bodyParser.json());
-
-var file = "./rutube.db";
-var db = new sqlite3.Database(file);
-
 
 /**
  * Get - Gets a list of all videos - authorization user or admin
