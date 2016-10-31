@@ -78,53 +78,98 @@ app.get("/", (req, res) => {
     });
 });
 
-//Update - með user og pass old og new í body
+/**
+ * Update - Updates password for user - No authorization required but username and password must be correct
+ * Must specify username, oldpassword and newpassword in the body of the request
+ * return the login token for the user if successful
+ */
 app.put("/", (req, res) => {
  
-    
     if(req.body.username === undefined || req.body.newpassword === undefined || req.body.oldpassword === undefined) {
         return res.status(412).send("Username and both passwords must be defined in the body of the request.");
     }
 
     var username = req.body.username;
     var newPassword = req.body.newpassword;
-    var oldPassword = req.body.oldPassword;
+    var oldPassword = req.body.oldpassword;
 
     var credentials = {
         username: username,
         password: oldPassword
     }
-
     auth.getToken(credentials, (authErr, authSuccess) => {
         if(authErr) {
-            return res.status(401).json(authErr);
+            return res.status(401).send(authErr.authError);
         } else {
             console.log(authSuccess);
-            credentials.password = newpassword;
+            credentials.password = newPassword;
+            dbLayer.updatePassword( credentials, (err, dbrs) => {
+                if(err) {
+                    if(err.userNotFound === undefined)
+                        return res.status(500).json(err.err);
+                    else
+                        return res.status(404).json(err.userNotFound);
+                } else {
+                    return res.status(200).json(authSuccess);
+                }
+            });
         }
     });
 });
 
-//Delete user with given username in the body of the request
+/**
+ * Delete - deletes the user - authorization admin or correct username and password
+ * The username and password must be given in the request body or logged in as admin
+ * Returns status code 204 if successful
+ */
 app.delete("/", (req, res) => {
 
-    if(req.body.username === undefined) {
-        return res.status(412).send("Username and password must be defined in the body of the request.");
+    //if the 
+    if(req.headers.authorization === undefined) {
+        if(req.body.username === undefined || req.body.password === undefined) {
+            return res.status(412).send("Username and password must be defined in the body of the request.");
+        }
+        
+        var credentials = {
+            username: req.body.username,
+            password: req.body.password
+        }
+
+        auth.getToken(credentials, (authErr, authSuccess) => {
+            if(authErr) {
+                return res.status(401).send(authErr.authError);
+            } else {
+                console.log(authSuccess);
+                dbLayer.deleteUser( credentials.username, (err, dbrs) => {
+                    if(err) {
+                        if(err.userNotFound === undefined)
+                            return res.status(500).json(err.err);
+                        else
+                            return res.status(404).json(err.userNotFound);
+                    } else {
+                        return res.status(204).json(dbrs);
+                    }
+                });
+            }
+        });
+
+    } else {
+        if(req.body.username === undefined) {
+            return res.status(412).send("Username must be defined in the body of the request.");
+        }
+
+        auth.authenticateAdmin(req.headers.authorization, (err, dbrs) => {
+            dbLayer.deleteUser( req.body.username, (err, dbrs) => {
+                if(err) {
+                    return res.status(401).send("You are not an admin you cannot access this function.");
+                } else {
+                    return res.status(204).json(dbrs);
+                }
+            });
+        })
     }
 
-    var username = req.body.username;
-
-    db.serialize(function () { 
-        db.run("DELETE FROM Accounts WHERE username = '" + username + "'", function (err, row) {
-            if(err)
-                return res.status(500).json();
-
-            if(this.changes === 0) {
-                return res.status(404).json();
-            }
-            return res.status(204).json(row);
-        });
-    });
+    
 });
 
 module.exports = app;

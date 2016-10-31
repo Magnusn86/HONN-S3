@@ -5,6 +5,13 @@ var sqlite3 = require("sqlite3").verbose();
 var file = "./rutube.db";
 var db = new sqlite3.Database(file);
 
+const passwordUpdated = "Password Successfully updated";
+const userNotFound = "User Not Found";
+const channelNotFound = "Channel does not exist";
+const videoNotFound = "Video not found";
+
+// Adds a user to the database with the given username(must be unique)
+// Returns the login token for the user
 const addUser = function(credentials, cb) {
 
     var username = credentials.username;
@@ -29,17 +36,181 @@ const getUser = function(credentials, cb) {
     return;
 }
 
-const updateUser = function(credentials, cd) {
+// Updates password in the database for the given credentials = {username, password} password is the new password
+// Returns the login token for the user
+const updatePassword = function(credentials, cb) {
     db.serialize(function () {
         db.run("UPDATE Accounts SET password = '" + credentials.password +"' WHERE username = '" + credentials.username + "'", function (err, row) {
+            var error = {
+                err: err,
+                userNotFound: undefined
+            };
             if(err) {
-                cb(err);
+                cb(error);
                 return;
             }
             if(this.changes === 0) {
-                cb(err);
+                error.userNotFound = userNotFound;
+                cb(error);
+                return;
             }
-            return res.status(200).json();
+            cb(null, passwordUpdated);
+        });
+    });
+}
+
+//Deletes user from the database with the given username
+const deleteUser = function(username, cb) {
+
+    db.serialize(function () { 
+        db.run("DELETE FROM Accounts WHERE username = '" + username + "'", function (err, row) {
+            var error = {
+                err: err,
+                userNotFound: undefined
+            };
+            if(err) {
+                cb(error);
+                return;
+            } 
+            if(this.changes === 0) {
+                error.userNotFound = userNotFound;
+                cb(error);
+                return;
+            }
+            cb(null, row);
+        });
+    });
+}
+
+const getAllVideos = function(cb) {
+    db.serialize(function () {
+            db.all("SELECT * FROM Videos", function (err, row) {
+                if(err) {
+                    cb(err);
+                    return;
+                }
+                cb(null,row);
+            });
+        });
+}
+
+const getVideosByChannel = function (channelId, cb) {
+
+    db.serialize(function () {
+        db.all("SELECT * FROM Videos WHERE videoID IN (SELECT c.videoid FROM ChannelVideos c WHERE c.ChannelID = " + channelID + ")", function (err, row) {
+            var error = {
+                err: err,
+                channelNotFound: undefined
+            };
+            if(err) {
+                cb(error);
+                return;
+            }
+            if(row === undefined || row.length === 0) {
+                error.channelNotFound = channelNotFound;
+                cb(error);
+                return;
+            }
+            cb(null, row);
+        });
+    });
+}
+
+const getChannelById = function(channelId, cb) {
+
+    db.serialize(function () {
+        db.get("SELECT * FROM Channels Where channelID = '" + channelId + "'", function (err, row) {
+            var error = {
+                err: err,
+                channelNotFound: undefined
+            };
+            if(err) {
+                cb(error);
+                return;
+            }
+            if(row === undefined || row.length === 0) {
+                error.channelNotFound = channelNotFound;
+                cb(error);
+                return;
+            }
+            cb(null, row);
+        });
+    });
+}
+
+const insertVideoReturnId = function(video, cb) {
+    db.serialize(function () {
+        db.run("INSERT INTO Videos (VideoID, Description, VideoURL) VALUES (NULL, '" + video.description + "','" + video.videoURL + "')", function (err, row) {
+            var error = {
+                err: err,
+                couldNotAddVideo: undefined
+            };
+            if(err) {
+                cb(error);
+                return;
+            }
+            var videoIDofInserted =  this.lastID;
+
+            if(videoIDofInserted === undefined) {
+                cb(error);
+                return;
+            }
+            cb(null, videoIDofInserted);
+        });
+    });
+}
+
+const insertVideoToChannel = function(data, cb) {
+    db.serialize(function () {
+        db.run("INSERT INTO ChannelVideos (VideoID, ChannelId) VALUES (" + data.videoIDofInserted + "," + data.channelID + ")", function (err, row) {
+            if(err) {
+                console.log(err);
+                cb(err);
+                return;
+            }
+            cb(null, row);    
+        });
+    });
+}
+
+const deleteVideoFromChannelByVideoID = function(videoID, cb) {
+    db.serialize(function () { 
+        db.run("DELETE FROM ChannelVideos WHERE VideoID = '" + videoID + "'", function (err, row) {
+            var error = {
+                err: err,
+                videoNotFound: undefined
+            };
+            if(err) {
+                cb(error);
+                return;
+            }
+            if(this.changes === 0) {
+                error.videoNotFound = videoNotFound;
+                cb(error);
+                return;
+            }
+            cb(null, row);
+        });
+    });
+}
+
+const deleteVideoById = function(videoID, cb) {
+    db.serialize(function () { 
+        db.run("DELETE FROM Videos WHERE VideoID = '" + videoID + "'", function (err, row) {
+            var error = {
+                err: err,
+                videoNotFound: undefined
+            };
+            if(err) {
+                cb(error);
+                return;
+            }
+            if(this.changes === 0) {
+                error.videoNotFound = videoNotFound;
+                cb(error);
+                return;
+            }
+            cb(null, row);
         });
     });
 }
@@ -47,5 +218,13 @@ const updateUser = function(credentials, cd) {
 module.exports = {
     addUser: addUser,
     getUser: getUser,
-    updateUser: updateUser,
+    updatePassword: updatePassword,
+    deleteUser: deleteUser,
+    getAllVideos: getAllVideos,
+    getVideosByChannel: getVideosByChannel,
+    getChannelById: getChannelById,
+    insertVideoReturnId: insertVideoReturnId,
+    insertVideoToChannel: insertVideoToChannel,
+    deleteVideoFromChannelByVideoID: deleteVideoFromChannelByVideoID,
+    deleteVideoById: deleteVideoById,
 }

@@ -8,9 +8,11 @@ const adminToken = "admin";
 const authMissing = "Authentication header missing";
 const authError = "Cannot authenticate user";
 const authSuccess = "User authenticated";
+const authAdmin = "Admin authenticated";
 
 const authorizeUser = function(auth, cb) {
 
+    console.log(auth);
     if(auth === adminToken) {
         console.log("Logged in as admin");
         cb(null, authSuccess);
@@ -25,12 +27,11 @@ const authorizeUser = function(auth, cb) {
                     cb(dberr);
                     return;
                 }
-                if(row === undefined) {
+                if(dbrow === undefined) {
                     console.log("Could not find login token in database");
                     cb(authError);
                     return;
                 } else {
-                    console.log(authSuccess);
                     cb(null, authSuccess);
                 }
             });
@@ -50,6 +51,7 @@ const getToken = function(auth, cb) {
                 cb(error);
                 return;
             }
+            console.log(this.lastID);
             if(row === undefined) {
                 error.authError = authError;
                 cb(error);
@@ -60,7 +62,17 @@ const getToken = function(auth, cb) {
     });
 }
 
+const authenticateAdmin = function(auth, cb) {
+    if(auth === adminToken) {
+        cb(null, authenticateAdmin);
+        return;
+    } else {
+        cb(authError);
+        return;
+    }
+}
 module.exports = {
     getToken: getToken,
     authorizeUser: authorizeUser,
+    authenticateAdmin: authenticateAdmin,
 }

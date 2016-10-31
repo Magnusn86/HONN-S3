@@ -4,6 +4,8 @@ const express = require("express");
 const app = express();
 const uuid = require("node-uuid");
 var bodyParser = require('body-parser');
+const dbLayer = require("./database_layer");
+const auth = require("./authorization");
 var fs = require("fs");
 var sqlite3 = require("sqlite3").verbose();
 
@@ -13,143 +15,128 @@ var file = "./rutube.db";
 var db = new sqlite3.Database(file);
 
 
-//Get - list of all videos
+/**
+ * Get - Gets a list of all videos - authorization user or admin
+ * Returns a list of all videos if valid user or admin
+ */
 app.get("/", (req, res) => {
 
     if(req.headers.authorization === undefined) {
         return res.status(401).send("Not authorized!");
     } else {
-        auth = req.headers.authorization;
-        db.serialize(function () {
-            db.get("SELECT token FROM Accounts Where token = '" + auth + "'", function (err, row) {
-                if(err)
-                    return res.status(500).json();
-                if(row === undefined) {
-                    return res.status(401).send("Not authorized");
-                } else {
-                    db.serialize(function () {
-                        db.all("SELECT * FROM Videos", function (err, row) {
-                            if(err)
-                                return res.status(500).json();
-                            return res.status(200).json(row);
-                        });
-                    });
-                }
-            });
+        auth.authorizeUser(req.headers.authorization, (err, dbrs) => {
+            if(err) {
+                return res.status(401).send(err);
+            } else {
+                dbLayer.getAllVideos((err1, dbrs1) => {
+                    if(err)
+                        return res.status(500).json();
+                    else
+                        return res.status(200).json(dbrs1);
+                });
+            }
         });
     }
-    
 });
-
-//get list of videos in given channel
+/**
+ * Get - Gets a list of videos in given channel - Must be a user or admin
+ * Returns a list of all videos in the given channel given by id in the URL
+ */
 app.get("/channel/:id", (req, res) => {
 
     if(req.headers.authorization === undefined) {
         return res.status(401).send("Not authorized!");
     } else {
-        auth = req.headers.authorization;
-        db.serialize(function () {
-            db.get("SELECT token FROM Accounts Where token = '" + auth + "'", function (err, row) {
-                if(err)
-                    return res.status(500).json();
-                if(row === undefined) {
-                    return res.status(401).send("Not authorized");
-                } else {
-                    channelID = req.params.id;
-                    db.serialize(function () {
-                        db.all("SELECT * FROM Videos WHERE videoID IN (SELECT c.videoid FROM ChannelVideos c WHERE c.ChannelID = " + channelID + ")", function (err, row) {
-                            if(err) {
-                                console.log("error");
-                                return res.status(500).json();
-                            }
-                            if(row === undefined || row.length === 0) {
-                                return res.status(404).send("Channel does not exist");
-                            }
-                            console.log("row: " + row);
-                            return res.status(200).json(row);
-                        });
-                    });
-                }
-            });
+        auth.authorizeUser(req.headers.authorization, (err, dbrs) => {
+            if(err) {
+                return res.status(401).send(err);
+            } else {
+                channelID = req.params.id;
+                dbLayer.getVideosByChannel(channelID, (err1, dbrs1) => {
+                    if(err) {
+                        if(err1.channelNotFound === undefined) {
+                            return res.status(500).json();
+                        }
+                        return res.status(404).json(err1.channelNotFound);
+                    } else {
+                        return res.status(200).json(dbrs1);
+                    }
+                });
+            }
         });
-    }
-    
+    }    
 });
 
-//Post - Add a video to channel
-app.post("/Add", (req, res) => {
+/**
+ * Post - Add a video to channel - must be a user or admin
+ * Must have a correct Channel id in the URL as parameter and videoURL and description(optional) in the request body
+ * Returns status code 201 if successful
+ */ 
+app.post("/channel/:id", (req, res) => {
     
 
     if(req.headers.authorization === undefined) {
         return res.status(401).send("Not authorized!");
     } else {
-        if(req.body.videoURL === undefined || req.body.channelID === undefined) {
-            return res.status(412).send("VideoURL and ChannelID must be defined in the body of the request.");
-        }
-        var videoURL = req.body.videoURL;
-        var channelID = req.body.channelID;
-        var description;
-        if(req.body.Description === undefined) {
-            description = null;
-        } else {
-            description = req.body.Description;
-        }
-        
-        //check if the authorization token is in the accounts database
-        auth = req.headers.authorization;
-        db.serialize(function () {
-            db.get("SELECT token FROM Accounts Where token = '" + auth + "'", function (err, row) {
-                if(err)
-                    return res.status(500).json();
-                if(row === undefined) {
-                    return res.status(401).send("Not authorized");
-                } else {
-                    //check if channel exists in database
-                    db.serialize(function () {
-                        db.get("SELECT * FROM Channels Where channelID = '" + channelID + "'", function (err, row) {
-                            if(err)
-                                return res.status(500).json();
-                            if(row === undefined) {
-                                return res.status(404).send("Channel is not in the database");
-                            }
-                        });
-                    });
-
-                    var videoIDofInserted;
-                    db.serialize(function () {
-                        db.run("INSERT INTO Videos (VideoID, Description, VideoURL) VALUES (NULL, '" + description + "','" + videoURL + "')", function (err, row) {
-                            if(err) {
-                                return res.status(500).json();
-                            }
-                            videoIDofInserted =  this.lastID;
-
-                            if(videoIDofInserted === undefined) {
-                                return res.status(412).send("Could not add video")
-                            }
-
-                            //Add the video tho the channel
-                            db.serialize(function () {
-                                db.run("INSERT INTO ChannelVideos (VideoID, ChannelId) VALUES (" + videoIDofInserted + "," + channelID + ")", function (err, row) {
-                                    if(err) {
-                                        console.log(err);
-                                        return res.status(500).json();
-                                    }
-
-                                    return res.status(201).json();
-                            
-                                });
-                            });
-                        });
-                    });
+        auth.authorizeUser(req.headers.authorization, (err, dbrs) => {
+            if(err) {
+                return res.status(401).send(err);
+            } else {
+                if(req.body.videoURL === undefined || req.params.id === undefined) {
+                    return res.status(412).send("VideoURL and ChannelID must be defined in the body of the request.");
                 }
-            });
+                var videoURL = req.body.videoURL;
+                var channelID = req.params.id;
+                var description;
+                console.log(req.body.description);
+                if(req.body.description === undefined) {
+                    description = null;
+                } else {
+                    description = req.body.description;
+                }  
+
+                dbLayer.getChannelById(channelID, (err1, dbrs1) => {
+                    if(err) {
+                        if(err1.channelNotFound === undefined)
+                            return res.status(500).json();
+                        return res.status(404).json(err.channelNotFound);
+                    } else {
+                         var video = {
+                            videoURL: videoURL,
+                            description: description
+                        };
+                        dbLayer.insertVideoReturnId(video, (err2, dbrs2) => {
+                            if(err){
+                                return res.status(500).json();
+                            } else {
+                                var videoIDofInserted = dbrs2;
+                                var data = {
+                                    videoIDofInserted: videoIDofInserted,
+                                    channelID: channelID
+                                };
+                                dbLayer.insertVideoToChannel(data, (err3, dbrs3) => {
+                                    if(err3) {
+                                        if(err3.couldNotAddVideo === undefined)
+                                            return res.status(500).json(err.err);
+                                        return res.status(412).json(err.couldNotAddVideo);
+                                    } else {
+                                        return res.status(201).json(dbrs3);
+                                    }
+                                });
+                            }
+                        })
+                    }
+                });
+            }
         });
-
-
     }
 });
 
-//Delete  - Video
+/**
+ * Delete - Video - must be user or admin to user this function
+ * Must have the videoID in the body of the request.
+ * Returns status code 204 if successful
+ */
 app.delete("/", (req, res) => {
 
     if(req.body.videoID === undefined) {
@@ -159,46 +146,32 @@ app.delete("/", (req, res) => {
     if(req.headers.authorization === undefined) {
         return res.status(401).send("Not authorized!");
     } else {
-        
-        //check if the authorization token is in the accounts database
         auth = req.headers.authorization;
-        db.serialize(function () {
-            db.get("SELECT token FROM Accounts Where token = '" + auth + "'", function (err, row) {
-                if(err)
-                    return res.status(500).json();
-                console.log(row);
-                console.log(this);
-                if(row === undefined) {
-                    return res.status(401).send("Not authorized");
-                } else {
-                    var videoID = req.body.videoID;
-                    //delete the video from the database
-                    db.serialize(function () { 
-                        db.run("DELETE FROM Videos WHERE VideoID = '" + videoID + "'", function (err, row) {
-                            if(err)
-                                return res.status(500).json();
-
-                            if(this.changes === 0) {
-                                return res.status(404).json();
+        auth.authorizeUser(req.headers.authorization, (err, dbrs) => {
+            if(err) {
+                return res.status(401).send(err);
+            } else {
+                var videoID = req.body.videoID;
+                dbLayer.deleteVideoById(videoID, (err1, dbrs1) => {
+                    if(err1) {
+                        if(err1.videoNotFound == undefined)
+                            return res.status(500).send(err1.err);
+                        else 
+                            return res.status(404).send(err1.videoNotFound);
+                    } else {
+                        dbLayer.deleteVideoFromChannelByVideoID(videoID, (err2, dbrs2) => {
+                            if(err2) {
+                                if(err2.videoNotFound == undefined)
+                                    return res.status(500).json(err2.err);
+                                else 
+                                    return res.status(404).send(err2.videoNotFound);
+                            } else {
+                                return res.status(204).json();
                             }
-                            return res.status(204).json(row);
                         });
-                    });
-
-                    //delete the video from the channels
-                    db.serialize(function () { 
-                        db.run("DELETE FROM ChannelVideos WHERE VideoID = '" + videoID + "'", function (err, row) {
-                            if(err)
-                                return res.status(500).json();
-
-                            if(this.changes === 0) {
-                                return res.status(404).json();
-                            }
-                            return res.status(204).json(row);
-                        });
-                    });
-                }
-            });
+                    }
+                });
+            }
         });
     }
 });
