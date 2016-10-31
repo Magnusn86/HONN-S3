@@ -4,70 +4,106 @@ var database = require("../database_layer");
 
 describe(" Api test", function() {
 
-    describe("Video Api", function() {
+    describe("Account Api", function() {
 
-        var url = "http://localhost:5000/videos";
+        var url = "http://localhost:5000/accounts";
 
-        it("User not authorized, returns status 401", function(done) {
-            request(url, function(error, response, body) {
-                expect(response.statusCode).to.equal(401);
-                done();
+        it("Create user and get authentication token with status code 201", function(done) {
+            request.post({
+                url: url,
+                json: {
+                    username: "Mocha User",
+                    password: "Moooocha"
+                }}, 
+                function(error, response, body) {
+                    expect(body).to.not.equal(undefined);
+                    expect(response.statusCode).to.equal(201);
+                    done();
             });
         });
 
-    it("Returns a list of videos and status code 200", function(done) {
-        request({
-            url: url,
-            headers: {
-                'Authorization': "admin"
-            }}, 
-            function(error, response, body) {
-            database.getAllVideos((err, res) => {
-                expect(JSON.parse(body)).to.deep.equal(res);
-                expect(response.statusCode).to.equal(200);
-                done();
+        it("Create user with a username that already exitst and get status code 412", function(done) {
+            request.post({
+                url: url,
+                json: {
+                    username: "Mocha User",
+                    password: "Moooocha"
+                }}, 
+                function(error, response, body) {
+                    expect(body).to.not.equal(undefined);
+                    expect(response.statusCode).to.equal(412);
+                    done();
             });
         });
+
+        it("Try to update user password with wrong password and returns status code 401", function(done) {
+            request.put({
+                url: url,
+                json: {
+                    username: "Mocha User",
+                    oldpassword: "NOT Moooocha",
+                    newpassword: "Moooocha?"
+                }}, 
+                function(error, response, body) {
+                    expect(body).to.equal("Cannot authenticate user");
+                    expect(response.statusCode).to.equal(401);
+                    done();
+            });
+        });
+
+        it("Try to update user password with right password and user and returns status code 200", function(done) {
+            request.put({
+                url: url,
+                json: {
+                    username: "Mocha User",
+                    oldpassword: "Moooocha",
+                    newpassword: "Moooocha?"
+                }}, 
+                function(error, response, body) {
+                    expect(body).to.not.equal(undefined);
+                    expect(response.statusCode).to.equal(200);
+                    done();
+            });
+        });
+
+        it("Try to delete user returns with wrong password and returns status code 401", function(done) {
+            request.delete({
+                url: url,
+                json: {
+                    username: "Mocha User",
+                    password: "Moooocha"
+                }}, 
+                function(error, response, body) {
+                    expect(body).to.not.equal(undefined);
+                    expect(response.statusCode).to.equal(401);
+                    done();
+            });
+        });
+
+        it("Delete user and returns status code 204", function(done) {
+            request.delete({
+                url: url,
+                headers: {
+                    'Authorization': "admin"
+                },
+                json: {
+                    username: "Mocha User",
+                    password: "Moooocha?"
+                }}, 
+                function(error, response, body) {
+                    expect(body).to.equal(undefined);
+                    expect(response.statusCode).to.equal(204);
+                    done();
+            });
+        });
+
+
+
     });
 
-    it("Returns a list of videos in a given channel 4 and status code 200", function(done) {
-        request({
-            url: "http://localhost:5000/videos/channel/4",
-            headers: {
-                'Authorization': "admin"
-            }}, 
-            function(error, response, body) {
-            database.getVideosByChannel(4, (err, res) => {
-                expect(JSON.parse(body)).to.deep.equal(res);
-                expect(response.statusCode).to.equal(200);
-                done();
-            });
-        });
-    });
-
-    it("Add a video to a channel returns status code 204", function(done) {
-        //insertVideoReturnId
-        request.post({
-            url: "http://localhost:5000/videos/channel/4",
-            headers: {
-                'Authorization': "admin"
-            },
-            json: {
-                field1: 'data',
-                field2: 'data'
-            }}, 
-            function(error, response, body) {
-            database.(4, (err, res) => {
-                expect(JSON.parse(body)).to.deep.equal(res);
-                expect(response.statusCode).to.equal(200);
-                done();
-            });
-        });
-    });
-
-
-  });
 });
+
+
 
 
 /*

@@ -44,7 +44,7 @@ app.post("/", (req, res) => {
                 return res.status(412).send("Username already exists, please choose another username");
             }
         } else {
-            return res.status(200).json(dbrs);
+            return res.status(201).json(dbrs);
         } 
     });
 });
