@@ -69,8 +69,8 @@ db.close();
 
 
 
-app.use('/user', userApi);
-app.use('/account', accountApi);
-app.use('/video', videoApi);
+app.use('/users', userApi);
+app.use('/accounts', accountApi);
+app.use('/videos', videoApi);
 
 module.exports = db;
