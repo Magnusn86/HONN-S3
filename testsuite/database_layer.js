@@ -23,11 +23,11 @@ const addUser = function(credentials, cb) {
             db.run("INSERT INTO Accounts (UserID, Username, Password, Token) VALUES (NULL, '" 
                     + username + "','" + password + "','" + token + "')", function (err, row) {
                 if(err) {
-                    console.log(err);
+                    //console.log(err);
                     cb(err);
                     return;
                 }
-                console.log(row);
+                //console.log(row);
                 cb(null, token);
             });
         });
@@ -98,7 +98,7 @@ const getAllVideos = function(cb) {
 const getVideosByChannel = function (channelId, cb) {
 
     db.serialize(function () {
-        db.all("SELECT * FROM Videos WHERE videoID IN (SELECT c.videoid FROM ChannelVideos c WHERE c.ChannelID = " + channelID + ")", function (err, row) {
+        db.all("SELECT * FROM Videos WHERE videoID IN (SELECT c.videoid FROM ChannelVideos c WHERE c.ChannelID = " + channelId + ")", function (err, row) {
             var error = {
                 err: err,
                 channelNotFound: undefined
@@ -165,7 +165,7 @@ const insertVideoToChannel = function(data, cb) {
     db.serialize(function () {
         db.run("INSERT INTO ChannelVideos (VideoID, ChannelId) VALUES (" + data.videoIDofInserted + "," + data.channelID + ")", function (err, row) {
             if(err) {
-                console.log(err);
+                //console.log(err);
                 cb(err);
                 return;
             }

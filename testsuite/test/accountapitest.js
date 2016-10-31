@@ -2,20 +2,20 @@ var expect    = require("chai").expect;
 var request = require("request");
 var database = require("../database_layer");
 
-describe("Videos Api test", function() {
+describe(" Api test", function() {
 
-    describe("User not authorized", function() {
+    describe("Video Api", function() {
 
         var url = "http://localhost:5000/videos";
 
-        it("returns status 401", function(done) {
+        it("User not authorized, returns status 401", function(done) {
             request(url, function(error, response, body) {
                 expect(response.statusCode).to.equal(401);
                 done();
             });
         });
 
-    it("Returns a list of videos", function(done) {
+    it("Returns a list of videos and status code 200", function(done) {
         request({
             url: url,
             headers: {
@@ -23,17 +23,49 @@ describe("Videos Api test", function() {
             }}, 
             function(error, response, body) {
             database.getAllVideos((err, res) => {
-                console.log(err);
-                console.log("inside");
-                console.log(res);
-                console.log(body);
                 expect(JSON.parse(body)).to.deep.equal(res);
+                expect(response.statusCode).to.equal(200);
                 done();
             });
         });
-        
-    
     });
+
+    it("Returns a list of videos in a given channel 4 and status code 200", function(done) {
+        request({
+            url: "http://localhost:5000/videos/channel/4",
+            headers: {
+                'Authorization': "admin"
+            }}, 
+            function(error, response, body) {
+            database.getVideosByChannel(4, (err, res) => {
+                expect(JSON.parse(body)).to.deep.equal(res);
+                expect(response.statusCode).to.equal(200);
+                done();
+            });
+        });
+    });
+
+    it("Add a video to a channel returns status code 204", function(done) {
+        //insertVideoReturnId
+        request.post({
+            url: "http://localhost:5000/videos/channel/4",
+            headers: {
+                'Authorization': "admin"
+            },
+            json: {
+                field1: 'data',
+                field2: 'data'
+            }}, 
+            function(error, response, body) {
+            database.(4, (err, res) => {
+                expect(JSON.parse(body)).to.deep.equal(res);
+                expect(response.statusCode).to.equal(200);
+                done();
+            });
+        });
+    });
+
+
   });
 });
 

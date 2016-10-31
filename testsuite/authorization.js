@@ -13,9 +13,9 @@ const authAdmin = "Admin authenticated";
 
 const authorizeUser = function(auth, cb) {
 
-    console.log(auth);
+    //console.log(auth);
     if(auth === adminToken) {
-        console.log("Logged in as admin");
+        //console.log("Logged in as admin");
         cb(null, authSuccess);
         return;
     } else if ( auth === undefined ){
@@ -29,7 +29,7 @@ const authorizeUser = function(auth, cb) {
                     return;
                 }
                 if(dbrow === undefined) {
-                    console.log("Could not find login token in database");
+                    //console.log("Could not find login token in database");
                     cb(authError);
                     return;
                 } else {
@@ -42,7 +42,7 @@ const authorizeUser = function(auth, cb) {
 
 
 const getToken = function(auth, cb) {
-    console.log(auth);
+    //console.log(auth);
     db.serialize(function () {
         db.get("SELECT token FROM Accounts Where username = '" + auth.username + "' and password = '" + auth.password + "'", function (err, row) {
             var error = {
@@ -53,7 +53,7 @@ const getToken = function(auth, cb) {
                 cb(error);
                 return;
             }
-            console.log(this.lastID);
+            //console.log(this.lastID);
             if(row === undefined) {
                 error.authError = authError;
                 cb(error);
