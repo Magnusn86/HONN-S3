@@ -1,3 +1,4 @@
+//Connects with the database and manipulates the data
 const uuid = require("node-uuid");
 var fs = require("fs");
 var sqlite3 = require("sqlite3").verbose();
@@ -215,6 +216,53 @@ const deleteVideoById = function(videoID, cb) {
     });
 }
 
+
+const getFavoriteVideo = function(credentials , cb) {
+    db.serialize(function () {
+        db.get("SELECT UserID FROM Accounts Where token = '" + credentials.token + "'", function (err, row) {
+            if(err)
+                return cb(err);
+            if(row === undefined) 
+                return cb(err);
+
+            var userID = row.UserID;
+
+            db.all("SELECT * FROM Videos Where VideoID IN (SELECT u.VideoID FROM UserFavoriteVideos u WHERE u.UserID = " + userID + ")", function (err, rowV) {
+                if(err)
+                    return cb(err);
+                if(row === undefined)
+                    return cb(err);
+
+                cb(null, rowV);
+            });
+        });
+    });
+}
+
+const getUsersFriends = function(credentials , cb) {
+    db.serialize(function () {
+        db.get("SELECT UserID FROM Accounts Where token = '" + credentials.token + "'", function (err, row) {
+            if(err)
+                return cb(err);
+            if(row === undefined) 
+                return cb(err);
+
+            var userID = row.UserID;
+
+            db.all("SELECT UserFriendID FROM UserFriends Where UserID = '" + userID + "'", function (err, rowU) {
+                if(err)
+                    return cb(err);
+                if(row === undefined)
+                    return cb(err);
+    
+                cb(null, rowU);
+            });
+        });
+    });
+}
+
+
+
 module.exports = {
     addUser: addUser,
     getUser: getUser,
@@ -227,4 +275,6 @@ module.exports = {
     insertVideoToChannel: insertVideoToChannel,
     deleteVideoFromChannelByVideoID: deleteVideoFromChannelByVideoID,
     deleteVideoById: deleteVideoById,
+    getFavoriteVideo: getFavoriteVideo,
+    getUsersFriends: getUsersFriends,
 }

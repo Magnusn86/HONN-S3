@@ -1,3 +1,4 @@
+// Connects to the database and authenticates users 
 var fs = require("fs");
 var sqlite3 = require("sqlite3").verbose();
 
@@ -41,6 +42,7 @@ const authorizeUser = function(auth, cb) {
 
 
 const getToken = function(auth, cb) {
+    console.log(auth);
     db.serialize(function () {
         db.get("SELECT token FROM Accounts Where username = '" + auth.username + "' and password = '" + auth.password + "'", function (err, row) {
             var error = {
@@ -71,8 +73,30 @@ const authenticateAdmin = function(auth, cb) {
         return;
     }
 }
+const getUserToken = function(auth, cb) {
+    db.serialize(function () {
+        db.get("SELECT UserID FROM Accounts Where token = '" + auth.token + "'", function (err, row) {
+            var error = {
+                err: err,
+                authError: undefined
+            };
+            if(err) {
+                cb(error);
+                return;
+            }
+            if(row === undefined) {
+                error.authError = authError;
+                cb(error);
+                return;
+            }
+            cb(null, row);
+        });
+    });
+}
+
 module.exports = {
     getToken: getToken,
+    getUserToken : getUserToken,
     authorizeUser: authorizeUser,
     authenticateAdmin: authenticateAdmin,
 }
