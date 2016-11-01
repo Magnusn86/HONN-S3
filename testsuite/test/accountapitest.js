@@ -18,8 +18,8 @@ describe(" Api test", function() {
                 function(error, response, body) {
                     expect(body).to.not.equal(undefined);
                     expect(response.statusCode).to.equal(201);
-                    done();
-            });
+                    //done();
+            },done());
         });
 
         it("Create user with a username that already exitst and get status code 412", function(done) {
@@ -32,8 +32,8 @@ describe(" Api test", function() {
                 function(error, response, body) {
                     expect(body).to.not.equal(undefined);
                     expect(response.statusCode).to.equal(412);
-                    done();
-            });
+                    //done();
+            },done());
         });
 
         it("Try to update user password with wrong password and returns status code 401", function(done) {
@@ -47,8 +47,8 @@ describe(" Api test", function() {
                 function(error, response, body) {
                     expect(body).to.equal("Cannot authenticate user");
                     expect(response.statusCode).to.equal(401);
-                    done();
-            });
+                    //done();
+            },done());
         });
 
         it("Try to update user password with right password and user and returns status code 200", function(done) {
@@ -62,8 +62,8 @@ describe(" Api test", function() {
                 function(error, response, body) {
                     expect(body).to.not.equal(undefined);
                     expect(response.statusCode).to.equal(200);
-                    done();
-            });
+                    //done();
+            },done());
         });
 
         it("Try to delete user returns with wrong password and returns status code 401", function(done) {
@@ -76,8 +76,8 @@ describe(" Api test", function() {
                 function(error, response, body) {
                     expect(body).to.not.equal(undefined);
                     expect(response.statusCode).to.equal(401);
-                    done();
-            });
+                   // done();
+            },done());
         });
 
         it("Delete user and returns status code 204", function(done) {
@@ -93,8 +93,8 @@ describe(" Api test", function() {
                 function(error, response, body) {
                     expect(body).to.equal(undefined);
                     expect(response.statusCode).to.equal(204);
-                    done();
-            });
+                    //done();
+            },done());
         });
 
 

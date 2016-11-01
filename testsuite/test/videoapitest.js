@@ -11,8 +11,7 @@ describe(" Api test", function() {
         it("User not authorized, returns status 401", function(done) {
             request(url, function(error, response, body) {
                 expect(response.statusCode).to.equal(401);
-                done();
-            });
+            },done());
         });
 
         it("Returns a list of videos and status code 200", function(done) {
@@ -25,9 +24,8 @@ describe(" Api test", function() {
                 database.getAllVideos((err, res) => {
                     expect(JSON.parse(body)).to.deep.equal(res);
                     expect(response.statusCode).to.equal(200);
-                    done();
                 });
-            });
+            },done());
         });
 
         it("Returns a list of videos in a given channel 4 and status code 200", function(done) {
@@ -40,9 +38,8 @@ describe(" Api test", function() {
                     database.getVideosByChannel(4, (err, res) => {
                         expect(JSON.parse(body)).to.deep.equal(res);
                         expect(response.statusCode).to.equal(200);
-                        done();
                     });
-            });
+            },done());
         });
 
         it("Add a video to channel 4 returns status code 201", function(done) {        
@@ -61,9 +58,8 @@ describe(" Api test", function() {
                         database.getVideosByChannel(4, (err, res) => {
                             expect(numberOfVideos+1).to.deep.equal(res.length);
                             expect(response.statusCode).to.equal(201);
-                            done();
                         });
-                });
+                },done());
             });
         });
 
@@ -89,9 +85,8 @@ describe(" Api test", function() {
                                 var newNumberOfVideos = res2.length;
                                 expect(numberOfVideos).to.equal(newNumberOfVideos);
                                 expect(response.statusCode).to.equal(204);
-                                done();
                             });
-                        });
+                        },done());
                     });
                 });
             });
